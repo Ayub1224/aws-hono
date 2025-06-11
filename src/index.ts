@@ -1,12 +1,7 @@
-import {Hono} from 'hono';
-import {handle} from 'hono/aws-lambda';
+import { Hono } from 'hono';
 
 const app = new Hono();
 
-app.get('/', (resp)=> {
-    return resp.text("Hello on Ayub's code base")
-})
+app.get('/', (c) => c.text('hello There !!!'));
 
-// if(process.env.N)
-
-export const handler = handle(app);
+export const handler = app.fetch;

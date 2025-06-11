@@ -28,6 +28,9 @@ jobs:
       - name: Zip Lambda Package
         run: zip -r lambda.zip dist node_modules package.json
 
+      - name: Bundle with esbuild
+        run: npx esbuild index.ts --bundle --platform=node --target=node20 --outfile=index.js
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
