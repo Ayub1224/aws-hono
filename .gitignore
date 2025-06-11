@@ -1,0 +1,15 @@
+# Node modules
+node_modules/
+
+# Compiled output
+dist/
+lambda.zip
+
+# Environment files
+.env
+
+# Logs and debug files
+*.log
+
+# Optional: lock file (if not needed in your team)
+# package-lock.json
