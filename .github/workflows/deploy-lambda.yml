@@ -1,37 +1,32 @@
-# .github/workflows/deploy-lambda.yml
-name: Deploy to AWS Lambda
+name: Deploy Hono to Lambda
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: Build Project
+      - name: Build using esbuild
         run: npm run build
 
-      - name: Zip Lambda Package
-        run: zip -r lambda.zip dist node_modules package.json
+      - name: Zip deployment
+        run: zip -r lambda.zip index.js node_modules/ package.json
 
-      - name: Bundle with esbuild
-        run: npx esbuild index.ts --bundle --platform=node --target=node20 --outfile=index.js
-
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -42,4 +37,5 @@ jobs:
         run: |
           aws lambda update-function-code \
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
-            --zip-file fileb://lambda.zip
+            --zip-file fileb://lambda.zip \
+            --region ${{ secrets.AWS_REGION }}
