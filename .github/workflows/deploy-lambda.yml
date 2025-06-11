@@ -9,34 +9,69 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
+        
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
+          cache: 'npm'
+          
       - name: Install Dependencies
-        run: npm install
-
+        run: npm ci
+        
       - name: Build Project
         run: npm run build
-
-      - name: Zip Lambda Package
-        run: zip -r lambda.zip dist node_modules package.json
-
+        
+      - name: Create Lambda Package
+        run: |
+          # Create a clean directory for the package
+          mkdir -p lambda-package
+          
+          # Copy built files
+          cp -r dist/* lambda-package/
+          
+          # Copy package.json and install production dependencies
+          cp package.json lambda-package/
+          cd lambda-package
+          npm install --only=production --ignore-scripts
+          cd ..
+          
+          # Create zip file
+          cd lambda-package
+          zip -r ../lambda.zip .
+          cd ..
+          
+      - name: Debug Secrets
+        run: |
+          echo "AWS Region: ${{ secrets.AWS_REGION }}"
+          echo "Function Name: ${{ secrets.LAMBDA_FUNCTION_NAME }}"
+          
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
+          aws-region: us-east-1
+          
       - name: Deploy to Lambda
         run: |
+          # Update function code
           aws lambda update-function-code \
             --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
             --zip-file fileb://lambda.zip
+            
+          # Update function configuration (optional)
+          aws lambda update-function-configuration \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --handler ${{ secrets.LAMBDA_HANDLER }} \
+            --runtime ${{ secrets.RUNTIME }}
+            
+      - name: Verify Deployment
+        run: |
+          aws lambda get-function \
+            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --query 'Configuration.LastModified'
