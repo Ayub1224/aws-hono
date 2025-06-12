@@ -22,10 +22,10 @@ jobs:
 
       - name: Build using esbuild
         run: npm run build
-
-      - name: Zip deployment
+      
+      - name: Zip deployment files
         run: zip -r lambda.zip index.js node_modules/ package.json
-
+      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
